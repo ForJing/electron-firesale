@@ -10,7 +10,6 @@ app.on("ready", () => {
   mainWindow.on("ready-to-show", () => {
     mainWindow.show();
     mainWindow.webContents.openDevTools();
-    getFileFromUser();
   });
 
   mainWindow.on("closed", () => {
@@ -18,7 +17,7 @@ app.on("ready", () => {
   });
 });
 
-function getFileFromUser() {
+exports.getFileFromUser = () => {
   const files = dialog.showOpenDialog(mainWindow, {
     properties: ["openFile"],
     filters: [
@@ -27,11 +26,12 @@ function getFileFromUser() {
     ]
   });
 
-  if (!files) {
-    return;
+  if (files) {
+    openFile(files[0]);
   }
 
-  const file = files[0];
-  const content = fs.readFileSync(file).toString();
-  console.log(content);
-}
+  function openFile(file) {
+    const content = fs.readFileSync(file).toString();
+    mainWindow.webContents.send("file-opened", file, content);
+  }
+};
