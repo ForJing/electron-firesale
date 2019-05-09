@@ -19,6 +19,19 @@ app.on("ready", () => {
   });
 });
 
+app.on("window-all-closed", () => {
+  if (process.platform === "darwin") {
+    return false;
+  }
+  app.quit();
+});
+
+app.on("activate", (event, hasVisibleWindows) => {
+  if (!hasVisibleWindows) {
+    createWindow();
+  }
+});
+
 exports.getFileFromUser = targetWindow => {
   const files = dialog.showOpenDialog(targetWindow, {
     properties: ["openFile"],
@@ -38,8 +51,19 @@ exports.getFileFromUser = targetWindow => {
   }
 };
 
-exports.createWindow = title => {
-  let newWindow = new BrowserWindow({ show: false, title });
+exports.createWindow = () => {
+  let x, y;
+
+  const currentWindow = BrowserWindow.getFocusedWindow();
+
+  if (currentWindow) {
+    const [currentWindowX, currentWindowY] = currentWindow.getPosition();
+
+    x = currentWindowX + 10;
+    y = currentWindowY + 10;
+  }
+
+  let newWindow = new BrowserWindow({ show: false, x, y });
 
   newWindow.loadFile(__dirname + "/index.html");
 
@@ -53,4 +77,7 @@ exports.createWindow = title => {
     windows.delete(newWindow);
     newWindow = null;
   });
+
+  windows.add(newWindow);
+  return newWindow;
 };
