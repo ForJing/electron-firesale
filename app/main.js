@@ -32,7 +32,7 @@ app.on("activate", (event, hasVisibleWindows) => {
   }
 });
 
-exports.getFileFromUser = targetWindow => {
+function getFileFromUser(targetWindow) {
   const files = dialog.showOpenDialog(targetWindow, {
     properties: ["openFile"],
     filters: [
@@ -44,14 +44,16 @@ exports.getFileFromUser = targetWindow => {
   if (files) {
     openFile(targetWindow, files[0]);
   }
+}
 
-  function openFile(targetWindow, file) {
-    const content = fs.readFileSync(file).toString();
-    targetWindow.webContents.send("file-opened", file, content);
-  }
-};
+function openFile(targetWindow, file) {
+  const content = fs.readFileSync(file).toString();
+  app.addRecentDocument(file);
+  targetWindow.setRepresentedFilename(file);
+  targetWindow.webContents.send("file-opened", file, content);
+}
 
-exports.createWindow = () => {
+function createWindow() {
   let x, y;
 
   const currentWindow = BrowserWindow.getFocusedWindow();
@@ -80,4 +82,43 @@ exports.createWindow = () => {
 
   windows.add(newWindow);
   return newWindow;
-};
+}
+
+app.on("will-finish-launching", () => {
+  app.on("open-file", (event, file) => {
+    const win = createWindow();
+    win.once("ready-to-show", () => {
+      openFile(win, file);
+    });
+  });
+});
+
+function saveHtml(targetWindow, content) {
+  const file = dialog.showSaveDialog(targetWindow, {
+    title: "Save Html",
+    defaultPath: app.getPath("documents"),
+    filters: [{ name: "HTML Files", extensions: ["html", "htm"] }]
+  });
+
+  if (!file) return;
+  fs.writeFileSync(file, content);
+}
+
+function saveMarkdown(targetWindow, file, content) {
+  if (!file) {
+    file = dialog.showSaveDialog(targetWindow, {
+      title: "Save Markdown",
+      defaultPath: app.getPath("documents"),
+      filters: [{ name: "Markdown Files", extensions: ["md", "markdown"] }]
+    });
+  }
+
+  if (!file) return;
+  fs.writeFileSync(file, content);
+  openFile(targetWindow, file);
+}
+
+exports.createWindow = createWindow;
+exports.saveHtml = saveHtml;
+exports.getFileFromUser = getFileFromUser;
+exports.saveMarkdown = saveMarkdown;

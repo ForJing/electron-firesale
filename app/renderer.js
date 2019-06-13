@@ -34,11 +34,20 @@ openFileButton.addEventListener("click", () => {
   mainProcess.getFileFromUser(currentWindow);
 });
 
+saveHtmlButton.addEventListener("click", () => {
+  mainProcess.saveHtml(currentWindow, htmlView.innerHTML);
+});
+
+saveMarkdownButton.addEventListener("click", () => {
+  mainProcess.saveMarkdown(currentWindow, filePath, markdownView.value);
+});
+
 newFileButton.addEventListener("click", () => {
   mainProcess.createWindow();
 });
 
 ipcRenderer.on("file-opened", (event, file, content) => {
+  console.log("evnet", event);
   filePath = file;
   originalContent = content;
 
